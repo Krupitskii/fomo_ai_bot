@@ -376,3 +376,37 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+from flask import Flask
+import threading
+
+def run_bot():
+    """Функция запуска Telegram-бота"""
+    initialize_db()
+
+    updater = Updater(token=TELEGRAM_BOT_TOKEN, use_context=True)
+    dp = updater.dispatcher
+
+    dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(MessageHandler(Filters.photo, handle_photo))
+    dp.add_handler(MessageHandler(Filters.voice, handle_voice))
+    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_text))
+
+    updater.start_polling()
+    updater.idle()
+
+# Создаём Flask-заглушку
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "FOMO AI Bot is running"
+
+if __name__ == '__main__':
+    # Запускаем бота в отдельном потоке, чтобы Flask не мешал
+    threading.Thread(target=run_bot).start()
+    
+    import os
+    PORT = int(os.environ.get("PORT", 8080))
+    app.run(host="0.0.0.0", port=PORT)
